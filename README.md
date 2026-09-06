@@ -172,15 +172,38 @@ python -m pytest tests -v                # or: python tests/run_tests.py
 
 ---
 
-## Deployment (Render)
+## Deployment
 
-The repo ships a `render.yaml` blueprint:
+### Vercel (live)
+
+Deployed live at **https://faceid-chain.vercel.app** (personal account:
+
+The project is Vercel-serverless:
+- Entrypoint: `api/index.py` exposes the FastAPI ASGI app.
+- `vercel.json` rewrites every path to `/api/index`.
+- `.vercelignore` keeps `.venv`, samples, tests and scripts out of the function
+  bundle; the YuNet + SFace models (`models/**`) are bundled with the function.
+- On Vercel the ledger is written to `/tmp/ledger.json` (ephemeral — a cold
+  start re-seeds the genesis block; the chain is demonstrably valid within each
+  run and across warm invocations).
+
+Deploy yourself:
+
+```bash
+npm i -g vercel
+vercel login                       # links your Vercel account
+vercel deploy --prod --yes         # from the repo root
+```
+
+### Render (Blueprint, alternative)
+
+The repo ships a `render.yaml` blueprint (persistent `/data` disk keeps the
+ledger across restarts):
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
 
-Or, manually with the Blueprint:
 1. In [Render](https://render.com) Dashboard → **New +** → **Blueprint**.
-2. Point it at this GitHub repo; Render will create a free **web service** with:
+2. Point it at the GitHub repo; Render creates a free **web service** with:
    - Build: `python scripts/download_models.py && pip install -r requirements.txt`
    - Start: `uvicorn main:app --host 0.0.0.0 --port $PORT`
    - Health check: `/api/health`

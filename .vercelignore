@@ -1,0 +1,13 @@
+# Exclude heavy/generated dirs from Vercel serverless function bundles
+.venv
+__pycache__
+*.pyc
+samples
+data
+tests
+scripts
+.git
+*.env
+.env
+.env.example
+render.yaml

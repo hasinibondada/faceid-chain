@@ -20,3 +20,7 @@ samples/
 Thumbs.db
 .idea/
 .vscode/
+
+# Vercel
+.vercel/
+node_modules/
