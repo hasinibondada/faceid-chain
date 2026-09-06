@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# Env
+.env
+
+# Data / models
+data/*.json
+data/*.json.tmp
+!data/.gitkeep
+models/
+samples/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

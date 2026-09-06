@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FaceID Chain — Face Scan → Web Search → Blockchain Verify</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0f1a;
+    --panel: #121826;
+    --panel2: #0f1522;
+    --border: #223047;
+    --text: #e6edf7;
+    --muted: #8aa2c5;
+    --accent: #4f8cff;
+    --accent2: #7c5cff;
+    --green: #34d399;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 20% -10%, rgba(79,140,255,.15), transparent),
+      radial-gradient(ellipse 50% 40% at 90% 10%, rgba(124,92,255,.12), transparent);
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 24px 20px 80px; }
+  header { display: flex; align-items: center; gap: 14px; padding: 18px 0 8px; }
+  .logo {
+    width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: grid; place-items: center; font-weight: 700; color: #fff; font-size: 20px;
+  }
+  h1 { font-size: 22px; font-weight: 700; letter-spacing: .2px; }
+  .subtitle { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 24px 0 20px; }
+  .step {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px 18px; position: relative; overflow: hidden;
+  }
+  .step .num {
+    position: absolute; right: 10px; top: 6px; font-family: var(--mono);
+    font-size: 40px; font-weight: 700; color: rgba(255,255,255,.05);
+  }
+  .step h2 { font-size: 14px; font-weight: 600; color: var(--accent); letter-spacing: .3px; }
+  .step p { color: var(--muted); font-size: 12.5px; margin-top: 8px; line-height: 1.5; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px; margin-bottom: 18px;
+  }
+  .card h3 { font-size: 14px; font-weight: 600; margin-bottom: 14px; color: var(--text); }
+  label { display: block; color: var(--muted); font-size: 12.5px; margin: 10px 0 6px; }
+  input[type=text], input[type=file] { width: 100%; }
+  input[type=text], select {
+    background: var(--panel2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 10px; padding: 11px 12px; font-size: 13.5px; font-family: inherit;
+    outline: none;
+  }
+  .filezone {
+    border: 2px dashed var(--border); border-radius: 12px; padding: 22px;
+    text-align: center; cursor: pointer; transition: .2s; color: var(--muted);
+    background: var(--panel2);
+  }
+  .filezone:hover, .filezone.drag { border-color: var(--accent); color: var(--text); }
+  .filezone input { display: none; }
+  .flex { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+  .flex .grow { flex: 1; min-width: 180px; }
+  button {
+    border: none; cursor: pointer; font-family: inherit; font-weight: 600;
+    border-radius: 10px; padding: 12px 20px; font-size: 14px;
+  }
+  .btn-run {
+    background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff;
+    box-shadow: 0 6px 20px rgba(79,140,255,.3);
+  }
+  .btn-run:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-ghost {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    font-weight: 500;
+  }
+  #preview { display: none; max-width: 220px; max-height: 220px; border-radius: 10px;
+    border: 1px solid var(--border); margin-top: 12px; }
+  .result-hidden { display: none; }
+  .sect { margin-top: 22px; }
+  .kv { display: grid; grid-template-columns: 160px 1fr; gap: 6px 12px; font-size: 13px; }
+  .kv .k { color: var(--muted); }
+  .kv .v { font-family: var(--mono); color: var(--text); word-break: break-all; font-size: 12.5px; }
+  .badge {
+    display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11.5px;
+    font-weight: 600;
+  }
+  .b-green { background: rgba(52,211,153,.15); color: var(--green); border: 1px solid rgba(52,211,153,.4); }
+  .b-yellow { background: rgba(251,191,36,.12); color: var(--yellow); border: 1px solid rgba(251,191,36,.35); }
+  .b-red { background: rgba(248,113,113,.12); color: var(--red); border: 1px solid rgba(248,113,113,.4); }
+  .b-blue { background: rgba(79,140,255,.12); color: var(--accent); border: 1px solid rgba(79,140,255,.4); }
+  .post-list { display: flex; flex-direction: column; gap: 10px; }
+  .post {
+    background: var(--panel2); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .post .ptitle { font-size: 14px; font-weight: 600; color: var(--text); }
+  .post .purl { font-size: 12px; color: var(--accent); word-break: break-all; margin-top: 4px; }
+  .post .pmeta { font-size: 12px; color: var(--muted); margin-top: 8px; font-family: var(--mono); }
+  .mono { font-family: var(--mono); }
+  .chainbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .mini-block {
+    width: 44px; text-align: center; padding: 8px 4px; border-radius: 8px;
+    font-family: var(--mono); font-size: 10px; border: 1px solid var(--border);
+    background: var(--panel2); color: var(--muted);
+  }
+  .arrow { color: var(--border); font-family: var(--mono); }
+  .loading { display: none; align-items: center; gap: 14px; padding: 18px; }
+  .spinner {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 3px solid rgba(79,140,255,.25); border-top-color: var(--accent);
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .log {
+    background: #0a0e18; border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px; font-family: var(--mono); font-size: 12px; line-height: 1.7;
+    max-height: 240px; overflow-y: auto; color: #9fb6d8;
+  }
+  .log .ok { color: var(--green); }
+  .log .warn { color: var(--yellow); }
+  .footer { color: var(--muted); font-size: 12px; margin-top: 30px; text-align: center; line-height: 1.7; }
+  code { font-family: var(--mono); background: rgba(255,255,255,.06); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+  @media (max-width: 760px) { .steps { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">FC</div>
+    <div>
+      <h1>FaceID Chain</h1>
+      <div class="subtitle">Face scan → web / social search → on-chain verification</div>
+    </div>
+  </header>
+
+  <div class="steps">
+    <div class="step">
+      <div class="num">1</div>
+      <h2>Face Identification</h2>
+      <p>Detect &amp; encode the face from your input image with OpenCV DNN. Produces a compact face fingerprint.</p>
+    </div>
+    <div class="step">
+      <div class="num">2</div>
+      <h2>Web / Social Search</h2>
+      <p>A genuine Google search runs, candidate posts are downloaded, and each one is <b>face-matched</b> against the input to find a real matching post.</p>
+    </div>
+    <div class="step">
+      <div class="num">3</div>
+      <h2>Blockchain Verification</h2>
+      <p>The matched post's fingerprint is mined onto a tamper-evident local chain, then re-verified from the chain.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Scan a face</h3>
+    <div class="filezone" id="filezone">
+      <p style="font-weight:600; font-size:14px; color:var(--text)">Drop an image here or click to browse</p>
+      <p style="font-size:12px; margin-top:6px">JPG / PNG — a single clear face works best</p>
+      <input type="file" id="image" accept="image/*">
+    </div>
+    <img id="preview" alt="preview">
+    <div class="flex" style="margin-top:16px">
+      <div class="grow">
+        <label>Optional search hint (e.g. "John Smith")</label>
+        <input type="text" id="query" placeholder="Leave blank to auto-derive from the face">
+      </div>
+      <div class="grow" style="min-width:140px">
+        <label>Optional platform filter</label>
+        <select id="platform">
+          <option value="">All socials</option>
+          <option>instagram.com</option>
+          <option>twitter.com</option>
+          <option>facebook.com</option>
+          <option>linkedin.com</option>
+          <option>tiktok.com</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex" style="margin-top:16px">
+      <button class="btn-run" id="runBtn">Run Pipeline →</button>
+      <button class="btn-ghost" id="chainBtn">View Ledger</button>
+    </div>
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <div>
+        <div style="font-size:14px; font-weight:600">Running pipeline…</div>
+        <div style="font-size:12px; color:var(--muted)">detecting face → searching web → face-matching → mining onto chain</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="results" class="result-hidden">
+    <div class="card">
+      <h3>Pipeline result</h3>
+      <div class="log" id="log"></div>
+    </div>
+
+    <div class="card" id="postsCard" style="display:none">
+      <h3>Verified matching posts (face-confirmed)</h3>
+      <div class="post-list" id="postList"></div>
+    </div>
+
+    <div class="card" id="verCard" style="display:none">
+      <h3>Blockchain verification</h3>
+      <div id="verContent"></div>
+      <div class="channel">
+        <div class="chainbar" id="chainbar"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="ledgerCard" style="display:none">
+    <h3>Ledger / chain status</h3>
+    <pre class="log" id="ledger" style="max-height:400px"></pre>
+  </div>
+
+  <div class="footer">
+    Local simulated blockchain (SHA-256 chained, Merkle-rooted, difficulty-bounded PoW) · No external API keys required for search fallback.<br>
+    Source: <code>github.com/your-repo</code> · Built with FastAPI · OpenCV · Python
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let selectedFile = null;
+
+const zone = $('filezone');
+zone.addEventListener('click', () => $('image').click());
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('drag');
+  if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]);
+});
+$('image').addEventListener('change', e => { if (e.target.files.length) setFile(e.target.files[0]); });
+
+function setFile(file) {
+  selectedFile = file;
+  $('preview').src = URL.createObjectURL(file);
+  $('preview').style.display = 'block';
+}
+
+async function run(id) {
+  $('runBtn').disabled = true;
+  $('results').classList.remove('result-hidden');
+  $('verCard').style.display = 'none';
+  $('ledgerCard').style.display = 'none';
+  $('loading').style.display = 'flex';
+  $('log').innerHTML = '';
+
+  logc('step 1/3 — detecting & encoding face…');
+  logc('step 2/3 — searching web + face-matching candidates…');
+  logc('step 3/3 — writing record to blockchain & re-verifying…');
+
+  const fd = new FormData();
+  fd.append('image', selectedFile);
+  const q = $('query').value.trim();
+  if (q) fd.append('query', q);
+  const p = $('platform').value;
+  if (p) fd.append('platform', p);
+  fd.append('max_checks', 4);
+
+  try {
+    const res = await fetch('/api/pipeline', { method: 'POST', body: fd });
+    const data = await res.json();
+
+    $('loading').style.display = 'none';
+    $('runBtn').disabled = false;
+
+    if (!data.success) { logc('✗ ' + (data.error || 'failed'), 'warn'); return; }
+
+    logc('✓ faces detected: ' + data.faces_detected, 'ok');
+    logc('✓ face ids: ' + data.face_ids.join(', '), 'ok');
+    const s = data.search;
+    logc('✓ search backend: ' + s.backend + ' | query: "' + s.query + '"');
+    logc('✓ search hits: ' + s.total_hits + ' · face-checked: ' + s.face_checked);
+    if (!s.matched_posts.length) {
+      logc('✗ no face-matched posts found. Try a clearer photo or add a query hint.', 'warn');
+      return;
+    }
+    logc('✓ matched posts: ' + s.matched_posts.length, 'ok');
+    s.matched_posts.forEach(m => {
+      logc('   · ' + (m.page_url || m.image_url) + '  (score ' + m.match_score + ', ' + m.source + ')');
+    });
+    renderPosts(s.matched_posts);
+
+    const bc = data.blockchain;
+    if (bc.verification && bc.records.length) {
+      logc('✓ mined onto chain — block #' + bc.records[0].block_index, 'ok');
+      logc('✓ data hash ' + bc.records[0].data_hash, 'ok');
+      const v = bc.verification;
+      logc('✓ re-verification: ' + (v.verified ? 'VERIFIED on-chain' : 'FAILED'), 'ok');
+      renderVerification(data);
+    }
+    renderChainBar(bc);
+  } catch (err) {
+    $('loading').style.display = 'none'; $('runBtn').disabled = false;
+    logc('✗ network error: ' + err.message, 'warn');
+  }
+}
+$('runBtn').addEventListener('click', () => { if (selectedFile) run(); });
+
+async function chain() {
+  $('ledgerCard').style.display = 'block';
+  try {
+    const res = await fetch('/api/chain');
+    const data = await res.json();
+    $('ledger').textContent = JSON.stringify(data, null, 2);
+  } catch (e) { $('ledger').textContent = 'error: ' + e.message; }
+}
+$('chainBtn').addEventListener('click', chain);
+
+function logc(line, cls='') {
+  const d = document.createElement('div');
+  if (cls) d.className = cls;
+  d.textContent = line;
+  $('log').appendChild(d);
+  $('log').scrollTop = $('log').scrollHeight;
+}
+
+function renderPosts(posts) {
+  $('postsCard').style.display = 'block';
+  const list = $('postList');
+  list.innerHTML = '';
+  posts.forEach(p => {
+    const d = document.createElement('div');
+    d.className = 'post';
+    const img = p.image_url
+      ? `<img src="${p.image_url}" alt="match" style="max-width:120px;max-height:120px;border-radius:8px;float:left;margin-right:12px;border:1px solid var(--border)">`
+      : '';
+    d.innerHTML = img +
+      `<div class="ptitle">${escapeHtml(p.title || '(no title)')} <span class="badge b-green">${p.verified_match ? 'face-verified' : ''}</span></div>` +
+      `<div class="purl"><a href="${escapeHtml(p.page_url || p.image_url)}" target="_blank" rel="noopener" style="color:var(--accent)">${escapeHtml((p.page_url || p.image_url) || '')}</a></div>` +
+      `<div class="pmeta">score ${p.match_score} · source ${escapeHtml(p.source || '')} · route ${escapeHtml(p.match_route || '')} · face<br>${p.snippet ? escapeHtml(p.snippet).slice(0, 200) : ''}</div>` +
+      `<div style="clear:both"></div>`;
+    list.appendChild(d);
+  });
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, m => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[m]));
+}
+
+function renderVerification(data) {
+  $('verCard').style.display = 'block';
+  const v = data.blockchain.verification;
+  const r = data.blockchain.records[0];
+  let html = `<div class="kv">
+    <div class="k">Verification</div><div class="v">${v.verified ? '<span class="badge b-green">VERIFIED</span>' : '<span class="badge b-red">FAILED</span>'}</div>
+    <div class="k">Data hash</div><div class="v">${v.data_hash}</div>
+    <div class="k">Block index</div><div class="v">#${v.block_index}</div>
+    <div class="k">Block hash</div><div class="v">${v.block_hash}</div>
+    <div class="k">Merkle root matches</div><div class="v">${v.merkle_root_matches ? '✔' : '✘'}</div>
+    <div class="k">Post URL (on-chain)</div><div class="v">${v.record ? v.record.post_url : ''}</div>
+    <div class="k">Match score</div><div class="v">${r.post.match_score}</div>
+  </div>`;
+  $('verContent').innerHTML = html;
+}
+
+function renderChainBar(bc) {
+  const bar = $('chainbar');
+  bar.innerHTML = '';
+  for (let i = 0; i <= bc.height; i++) {
+    const m = document.createElement('div');
+    m.className = 'mini-block';
+    m.textContent = '#' + i;
+    m.title = 'block ' + i;
+    bar.appendChild(m);
+    if (i < bc.height) { const a = document.createElement('span'); a.className='arrow'; a.textContent='→'; bar.appendChild(a); }
+  }
+}
+healthCheck();
+async function healthCheck() {
+  try { const r = await fetch('/api/health'); const d = await r.json(); console.log('chain:', d.chain.name, 'height', d.chain.height); }
+  catch(e) {}
+}
+</script>
+</body>
+</html>

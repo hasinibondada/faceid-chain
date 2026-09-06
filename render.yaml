@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: faceid-chain
+    runtime: python
+    plan: free
+    buildCommand: python scripts/download_models.py && pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: BLOCKCHAIN_DIFFICULTY
+        value: "3"
+      - key: BLOCKCHAIN_LEDGER_PATH
+        value: "/data/ledger.json"
+    disk:
+      name: ledger
+      mountPath: /data
+      sizeGB: 1
