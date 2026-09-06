@@ -1,0 +1,12 @@
+{
+  "framework": "other",
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 60,
+      "includeFiles": ["app/**", "models/**"]
+    }
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/index" }
+  ]
+}

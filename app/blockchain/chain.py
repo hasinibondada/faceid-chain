@@ -25,10 +25,13 @@ import os
 import time
 from typing import Any, Dict, List, Optional
 
-LEDGER_PATH = os.getenv(
-    "BLOCKCHAIN_LEDGER_PATH",
-    os.path.join(os.path.dirname(__file__), "..", "..", "data", "ledger.json"),
+_IS_VERCEL = os.getenv("VERCEL", "") == "1"
+_DEFAULT_LEDGER = (
+    "/tmp/ledger.json" if _IS_VERCEL
+    else os.path.join(os.path.dirname(__file__), "..", "..", "data", "ledger.json")
 )
+
+LEDGER_PATH = os.getenv("BLOCKCHAIN_LEDGER_PATH", _DEFAULT_LEDGER)
 
 DIFFICULTY = int(os.getenv("BLOCKCHAIN_DIFFICULTY", "3"))
 
